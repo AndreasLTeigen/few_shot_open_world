@@ -56,6 +56,7 @@ def pairwise_distances(x: torch.Tensor,
     n_x = x.shape[0]
     n_y = y.shape[0]
 
+
     if matching_fn == 'l2':
         distances = (
                 x.unsqueeze(1).expand(n_x, n_y, -1) -

@@ -1,6 +1,8 @@
 import torch
+from torch import nn
 from torch.optim import Optimizer
 from torch.nn import Module
+import numpy as np
 from typing import Callable
 
 from few_shot.utils import pairwise_distances
@@ -55,12 +57,11 @@ def proto_net_episode(model: Module,
     # Output should have shape (q_queries * k_way, k_way) = (num_queries, k_way)
     distances = pairwise_distances(queries, prototypes, distance)
 
-    # Calculate log p_{phi} (y = k | x)
-    log_p_y = (-distances).log_softmax(dim=1)
-    loss = loss_fn(log_p_y, y)
+    sigmoid = nn.Sigmoid()
 
-    # Prediction probabilities are softmax over distances
-    y_pred = (-distances).softmax(dim=1)
+    sigmoid_distances = sigmoid(-distances)
+    y = torch.eye(k_way)[y].double().cuda()
+    loss = loss_fn(sigmoid_distances, y)
 
     if train:
         # Take gradient step
@@ -69,7 +70,7 @@ def proto_net_episode(model: Module,
     else:
         pass
 
-    return loss, y_pred
+    return loss, sigmoid_distances
 
 
 def compute_prototypes(support: torch.Tensor, k: int, n: int) -> torch.Tensor:

@@ -1,0 +1,140 @@
+-----------------------------
+K Nearest Neighbors (KNN): 
+Total open world accuracy
+0.6234
+Total outlier classifier confusion matrix
+{'true_positive': 2398, 'true_negative': 965, 'false_positive': 1535, 'false_negative': 102}
+Outlier classifier accuracy: 0.6726
+Outlier classifier presicion: 0.6097126875158911
+Outlier classifier recall: 0.9592
+Outlier classifier F1: 0.7455308565210632
+-----------------------------
+Average K Nearest Neighbors (AvgKNN): 
+Total open world accuracy
+0.6316
+Total outlier classifier confusion matrix
+{'true_positive': 2401, 'true_negative': 1006, 'false_positive': 1494, 'false_negative': 99}
+Outlier classifier accuracy: 0.6814
+Outlier classifier presicion: 0.6164313222079589
+Outlier classifier recall: 0.9604
+Outlier classifier F1: 0.7508991399530884
+-----------------------------
+Median K Nearest Neighbors (MedKNN): 
+Total open world accuracy
+0.6266
+Total outlier classifier confusion matrix
+{'true_positive': 2406, 'true_negative': 977, 'false_positive': 1523, 'false_negative': 94}
+Outlier classifier accuracy: 0.6766
+Outlier classifier presicion: 0.6123695596843981
+Outlier classifier recall: 0.9624
+Outlier classifier F1: 0.7484834344377042
+-----------------------------
+Local Outlier Factor (LOF): 
+Total open world accuracy
+0.6328
+Total outlier classifier confusion matrix
+{'true_positive': 2400, 'true_negative': 1014, 'false_positive': 1486, 'false_negative': 100}
+Outlier classifier accuracy: 0.6828
+Outlier classifier presicion: 0.6176016469377251
+Outlier classifier recall: 0.96
+Outlier classifier F1: 0.7516442217350453
+-----------------------------
+Connectivity-Based Outlier Factor (COF): 
+Total open world accuracy
+0.59
+Total outlier classifier confusion matrix
+{'true_positive': 2403, 'true_negative': 808, 'false_positive': 1692, 'false_negative': 97}
+Outlier classifier accuracy: 0.6422
+Outlier classifier presicion: 0.5868131868131868
+Outlier classifier recall: 0.9612
+Outlier classifier F1: 0.7287338893100834
+-----------------------------
+Subspace Outlier Detection (SOD): 
+Total open world accuracy
+0.59
+Total outlier classifier confusion matrix
+{'true_positive': 2403, 'true_negative': 808, 'false_positive': 1692, 'false_negative': 97}
+Outlier classifier accuracy: 0.6422
+Outlier classifier presicion: 0.5868131868131868
+Outlier classifier recall: 0.9612
+Outlier classifier F1: 0.7287338893100834
+-----------------------------
+Principal Component Analysis (PCA): 
+Total open world accuracy
+0.627
+Total outlier classifier confusion matrix
+{'true_positive': 1137, 'true_negative': 2094, 'false_positive': 406, 'false_negative': 1363}
+Outlier classifier accuracy: 0.6462
+Outlier classifier presicion: 0.7368762151652625
+Outlier classifier recall: 0.4548
+Outlier classifier F1: 0.5624536235468711
+-----------------------------
+One-Class Support Vector Machines (OCSVM): 
+Total open world accuracy
+0.6668
+Total outlier classifier confusion matrix
+{'true_positive': 2055, 'true_negative': 1471, 'false_positive': 1029, 'false_negative': 445}
+Outlier classifier accuracy: 0.7052
+Outlier classifier presicion: 0.6663424124513618
+Outlier classifier recall: 0.822
+Outlier classifier F1: 0.7360315186246418
+-----------------------------
+Deviation-based Outlier Detection (LMDD): 
+Total open world accuracy
+0.464
+Total outlier classifier confusion matrix
+{'true_positive': 2373, 'true_negative': 216, 'false_positive': 2284, 'false_negative': 127}
+Outlier classifier accuracy: 0.5178
+Outlier classifier presicion: 0.5095555078376637
+Outlier classifier recall: 0.9492
+Outlier classifier F1: 0.6631270085231242
+-----------------------------
+Angle-Based Outlier Detection (ABOD): 
+Total open world accuracy
+0.5876
+Total outlier classifier confusion matrix
+{'true_positive': 2385, 'true_negative': 808, 'false_positive': 1692, 'false_negative': 115}
+Outlier classifier accuracy: 0.6386
+Outlier classifier presicion: 0.5849889624724062
+Outlier classifier recall: 0.954
+Outlier classifier F1: 0.7252546753839136
+-----------------------------
+Stochastic Outlier Selection (SOS): 
+Total open world accuracy
+0.6288
+Total outlier classifier confusion matrix
+{'true_positive': 2387, 'true_negative': 1007, 'false_positive': 1493, 'false_negative': 113}
+Outlier classifier accuracy: 0.6788
+Outlier classifier presicion: 0.6152061855670103
+Outlier classifier recall: 0.9548
+Outlier classifier F1: 0.7482758620689656
+-----------------------------
+Isolation Forest (IForest): 
+Total open world accuracy
+0.4946
+Total outlier classifier confusion matrix
+{'true_positive': 2449, 'true_negative': 294, 'false_positive': 2206, 'false_negative': 51}
+Outlier classifier accuracy: 0.5486
+Outlier classifier presicion: 0.5261009667024704
+Outlier classifier recall: 0.9796
+Outlier classifier F1: 0.6845562543675751
+-----------------------------
+Feature Bagging: 
+Total open world accuracy
+0.6364
+Total outlier classifier confusion matrix
+{'true_positive': 2386, 'true_negative': 1047, 'false_positive': 1453, 'false_negative': 114}
+Outlier classifier accuracy: 0.6866
+Outlier classifier presicion: 0.6215160197968221
+Outlier classifier recall: 0.9544
+Outlier classifier F1: 0.7528001262028711
+-----------------------------
+Lightweight On-line Detector of Anomalies (LODA): 
+Total open world accuracy
+0.442
+Total outlier classifier confusion matrix
+{'true_positive': 2442, 'true_negative': 51, 'false_positive': 2449, 'false_negative': 58}
+Outlier classifier accuracy: 0.4986
+Outlier classifier presicion: 0.49928439991821716
+Outlier classifier recall: 0.9768
+Outlier classifier F1: 0.6608036801515357

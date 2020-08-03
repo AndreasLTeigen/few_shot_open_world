@@ -1,6 +1,7 @@
 """
 Reproduce Omniglot results of Snell et al Prototypical networks.
 """
+from torch import nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 import argparse
@@ -8,7 +9,7 @@ import argparse
 from few_shot.datasets import OmniglotDataset, MiniImageNet, Whoas
 from few_shot.models import get_few_shot_encoder
 from few_shot.core import NShotTaskSampler, EvaluateFewShot, prepare_nshot_task
-from few_shot.proto import proto_net_episode
+from few_shot.protoDOC import proto_net_episode
 from few_shot.train import fit
 from few_shot.callbacks import *
 from few_shot.utils import setup_dirs
@@ -90,7 +91,7 @@ model.to(device, dtype=torch.double)
 ############
 print(f'Training Prototypical network on {args.dataset}...')
 optimiser = Adam(model.parameters(), lr=1e-3)
-loss_fn = torch.nn.NLLLoss().cuda()
+loss_fn = torch.nn.BCELoss().cuda()
 
 
 def lr_schedule(epoch, lr):
@@ -113,11 +114,11 @@ callbacks = [
         distance=args.distance
     ),
     ModelCheckpoint(
-        filepath=PATH + f'/models/proto_nets/{param_str}.pth',
+        filepath=PATH + f'/models/protoDOC_nets/{param_str}.pth',
         monitor=f'val_{args.n_test}-shot_{args.k_test}-way_acc'
     ),
     LearningRateScheduler(schedule=lr_schedule),
-    CSVLogger(PATH + f'/logs/proto_nets/{param_str}.csv'),
+    CSVLogger(PATH + f'/logs/protoDOC_nets/{param_str}.csv'),
 ]
 
 fit(

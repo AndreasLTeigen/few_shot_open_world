@@ -219,6 +219,8 @@ class Whoas(Dataset):
             raise(ValueError, 'subset must be one of (background, evaluation)')
         self.subset = subset
 
+        self.num_input_channels=1
+
         self.df = pd.DataFrame(self.index_subset(self.subset))
 
         # Index of dataframe has direct correspondence to item in dataset
@@ -238,8 +240,8 @@ class Whoas(Dataset):
             #transforms.CenterCrop(224),
             transforms.Resize((84,84)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
+            #transforms.Normalize(mean=[0.485, 0.456, 0.406],
+            #                     std=[0.229, 0.224, 0.225])
         ])
 
     def __getitem__(self, item):
