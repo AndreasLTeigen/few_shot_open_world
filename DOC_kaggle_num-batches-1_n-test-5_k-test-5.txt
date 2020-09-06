@@ -1,0 +1,120 @@
+-----------------------------
+DOC: 
+Total open world accuracy
+0.2
+Total outlier classifier confusion matrix
+{'true_positive': 1, 'true_negative': 0, 'false_positive': 0, 'false_negative': 4}
+Outlier classifier accuracy: 0.2
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.2
+Outlier classifier F1: 0.33333333333333337
+-----------------------------
+DOC: 
+Total open world accuracy
+0.2
+Total outlier classifier confusion matrix
+{'true_positive': 1, 'true_negative': 0, 'false_positive': 0, 'false_negative': 4}
+Outlier classifier accuracy: 0.2
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.2
+Outlier classifier F1: 0.33333333333333337
+-----------------------------
+DOC: 
+Total open world accuracy
+0.4
+Total outlier classifier confusion matrix
+{'true_positive': 2, 'true_negative': 0, 'false_positive': 0, 'false_negative': 3}
+Outlier classifier accuracy: 0.4
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.4
+Outlier classifier F1: 0.5714285714285715
+-----------------------------
+DOC: 
+Total open world accuracy
+0.0
+Total outlier classifier confusion matrix
+{'true_positive': 1, 'true_negative': 0, 'false_positive': 0, 'false_negative': 4}
+Outlier classifier accuracy: 0.2
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.2
+Outlier classifier F1: 0.33333333333333337
+-----------------------------
+DOC: 
+Total open world accuracy
+0.2
+Total outlier classifier confusion matrix
+{'true_positive': 1, 'true_negative': 0, 'false_positive': 0, 'false_negative': 4}
+Outlier classifier accuracy: 0.2
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.2
+Outlier classifier F1: 0.33333333333333337
+-----------------------------
+DOC: 
+Total open world accuracy
+0.2
+Total outlier classifier confusion matrix
+{'true_positive': 1, 'true_negative': 0, 'false_positive': 0, 'false_negative': 4}
+Outlier classifier accuracy: 0.2
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.2
+Outlier classifier F1: 0.33333333333333337
+-----------------------------
+DOC: 
+Total open world accuracy
+0.0
+Total outlier classifier confusion matrix
+{'true_positive': 0, 'true_negative': 0, 'false_positive': 0, 'false_negative': 5}
+Outlier classifier accuracy: 0.0
+Outlier classifier presicion: 0
+Outlier classifier recall: 0.0
+Outlier classifier F1: 0
+-----------------------------
+DOC: 
+Total open world accuracy
+0.0
+Total outlier classifier confusion matrix
+{'true_positive': 0, 'true_negative': 0, 'false_positive': 0, 'false_negative': 5}
+Outlier classifier accuracy: 0.0
+Outlier classifier presicion: 0
+Outlier classifier recall: 0.0
+Outlier classifier F1: 0
+-----------------------------
+DOC: 
+Total open world accuracy
+0.2
+Total outlier classifier confusion matrix
+{'true_positive': 2, 'true_negative': 0, 'false_positive': 0, 'false_negative': 3}
+Outlier classifier accuracy: 0.4
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.4
+Outlier classifier F1: 0.5714285714285715
+-----------------------------
+DOC: 
+Total open world accuracy
+0.4
+Total outlier classifier confusion matrix
+{'true_positive': 2, 'true_negative': 0, 'false_positive': 0, 'false_negative': 3}
+Outlier classifier accuracy: 0.4
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.4
+Outlier classifier F1: 0.5714285714285715
+-----------------------------
+DOC: 
+Total open world accuracy
+0.2
+Total outlier classifier confusion matrix
+{'true_positive': 1, 'true_negative': 0, 'false_positive': 0, 'false_negative': 4}
+Outlier classifier accuracy: 0.2
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.2
+Outlier classifier F1: 0.33333333333333337
+-----------------------------
+DOC: 
+Total open world accuracy
+0.4
+Total outlier classifier confusion matrix
+{'true_positive': 2, 'true_negative': 0, 'false_positive': 0, 'false_negative': 3}
+Outlier classifier accuracy: 0.4
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.4
+Outlier classifier F1: 0.5714285714285715

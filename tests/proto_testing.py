@@ -12,7 +12,7 @@ from PIL import Image
 from config import PATH
 from few_shot.utils import pairwise_distances
 from few_shot.core import NShotTaskSampler, prepare_nshot_task
-from few_shot.datasets import Whoas
+from few_shot.datasets import Whoas, Kaggle, MiniImageNet
 from few_shot.proto import compute_prototypes, proto_net_episode
 from few_shot.models import get_few_shot_encoder
 #from proto_testing_utils import TSNEAlgo
@@ -166,6 +166,10 @@ class ResultExperimentation():
         if dataset == 'whoas':
             self.evaluation_dataset = Whoas('evaluation')
             #self.evaluation_dataset = Whoas('background')
+        elif dataset == 'kaggle':
+            self.evaluation_dataset = Kaggle('evaluation')
+        elif dataset == 'miniImageNet':
+            self.evaluation_dataset = MiniImageNet('evaluation')
         else:
             raise(ValueError, 'Unsupported dataset')
 
@@ -363,11 +367,11 @@ print('open_world_testing')
 print(args.open_world)
 
 experiment = ResultExperimentation(args.dataset, args.num_tasks, args.n_test, args.k_test, args.q_test, args.distance, args.open_world)
-experiment.load_model(PATH + '/models/proto_nets/whoas_97-9.pth')
+experiment.load_model(PATH + '/models/proto_nets/'+ args.dataset + '_nt=5_kt=10_qt=15_nv=5_kv=5_qv=1.pth')
 
 
 
-num_batches = 2000
+num_batches = 500
 unknown_probs = []
 unknown_probs_open_world = []
 total_correct = 0

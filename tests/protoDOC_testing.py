@@ -8,13 +8,14 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from typing import List, Iterable, Callable, Tuple
 import numpy as np
+import time
 from PIL import Image
 
 from config import PATH
 from DOC.doc_utils import get_class_fit
 from few_shot.utils import pairwise_distances
 from few_shot.core import NShotTaskSampler, prepare_nshot_task
-from few_shot.datasets import Whoas
+from few_shot.datasets import Whoas, Kaggle
 from few_shot.proto import compute_prototypes
 from few_shot.models import get_few_shot_encoder
 from openMax.evt_fitting import weibull_tailfitting, np_pairwise_distances
@@ -156,6 +157,7 @@ class ResultExperimentation():
                  distance_metric: str,
                  open_world_testing: bool
                  ):
+        self.dataset_name = dataset
         self.num_tasks = num_tasks
         self.n_shot = n_shot
         self.k_way = k_way
@@ -167,6 +169,8 @@ class ResultExperimentation():
 
         if dataset == 'whoas':
             self.evaluation_dataset = Whoas('evaluation')
+        elif dataset == 'kaggle':
+            self.evaluation_dataset = Kaggle('evaluation')
         else:
             raise(ValueError, 'Unsupported dataset')
 
@@ -204,6 +208,7 @@ class ResultExperimentation():
         queries = embeddings[self.n_shot*self.k_way:]
         prototypes = compute_prototypes(support, self.k_way, self.n_shot)
         distances = pairwise_distances(queries, prototypes, self.distance_metric)
+        start_time = time.time()
         mu_stds = get_class_fit(support, prototypes, self.k_way, self.n_shot, self.distance_metric)
         sigmoid = nn.Sigmoid()
         sigmoid_distances = sigmoid(-distances)
@@ -215,6 +220,8 @@ class ResultExperimentation():
                 pred_classes.append(max_class)
             else:
                 pred_classes.append(self.k_way)
+        print('Time Used: ')
+        print(1/(time.time()-start_time))
         y = torch.eye(self.k_way)[y].double().cuda()
         loss = self.loss_fn(sigmoid_distances, y)
         y_pred = sigmoid_distances
@@ -236,26 +243,6 @@ class ResultExperimentation():
                 correct_classifications += 1
 
         return correct_probabilites, correct_classifications, missclassifications
-
-    def get_performance_measures(self, confusion_matrix):
-        TP = confusion_matrix['true_positive']
-        FP = confusion_matrix['false_positive']
-        TN = confusion_matrix['true_negative']
-        FN = confusion_matrix['false_negative']
-        accuracy = (TP + TN)/(TP + TN + FP + FN)
-        if TP+FP == 0:
-            precision = 0
-        else:
-            precision = (TP)/(TP+FP)
-        if (TP+FN) == 0:
-            recall = 0
-        else:
-            recall = (TP)/(TP+FN)
-        if (recall+precision) == 0:
-            f1 = 0
-        else:
-            f1 = 2*(recall*precision)/(recall+precision)
-        return accuracy, precision, recall, f1
 
     def get_open_world_performance_metrics(self, pred_classes, batch_nr):
         openworld_classification_correct = 0
@@ -350,6 +337,52 @@ class ResultExperimentation():
 
         query_image.show()
 
+    def get_performance_measures(self, model_score):
+        TP = model_score['true_positive']
+        FP = model_score['false_positive']
+        TN = model_score['true_negative']
+        FN = model_score['false_negative']
+        accuracy = (TP + TN)/(TP + TN + FP + FN)
+        if TP+FP == 0:
+            precision = 0
+        else:
+            precision = (TP)/(TP+FP)
+        if (TP+FN) == 0:
+            recall = 0
+        else:
+            recall = (TP)/(TP+FN)
+        if (recall+precision) == 0:
+            f1 = 0
+        else:
+            f1 = 2*(recall*precision)/(recall+precision)
+        return accuracy, precision, recall, f1
+
+    def write_score_to_file(self, model_score, openworld_correct_classification):
+        filename = 'DOC_' + str(self.dataset_name) + '_num-batches-' + str(self.num_tasks) + '_n-test-' + str(self.n_shot) + '_k-test-' + str(self.k_way) +'.txt'
+        f = open(filename, "a")
+        f.write('-----------------------------')
+        f.write( "\n")
+        f.write('DOC: ')
+        f.write( "\n")
+        f.write('Total open world accuracy')
+        f.write( "\n")
+        f.write(str(openworld_correct_classification/total_predicitons))
+        f.write( "\n")
+        f.write('Total outlier classifier confusion matrix')
+        f.write( "\n")
+        f.write(str(model_score))
+        f.write( "\n")
+        outlier_accuracy, outlier_precision, outlier_recall, outlier_f1 = self.get_performance_measures(model_score)
+        f.write('Outlier classifier accuracy: ' + str(outlier_accuracy))
+        f.write( "\n")
+        f.write('Outlier classifier presicion: ' + str(outlier_precision))
+        f.write( "\n")
+        f.write('Outlier classifier recall: ' + str(outlier_recall))
+        f.write( "\n")
+        f.write('Outlier classifier F1: ' + str(outlier_f1))
+        f.write( "\n")
+        f.close()
+
 
 
 parser = argparse.ArgumentParser()
@@ -366,11 +399,11 @@ print('open_world_data')
 print(args.open_world)
 
 experiment = ResultExperimentation(args.dataset, args.num_tasks, args.n_test, args.k_test, args.q_test, args.distance, args.open_world)
-experiment.load_model(PATH + '/models/protoDOC_nets/whoas_95-6.pth')
+experiment.load_model(PATH + '/models/protoDOC_nets/kaggle_nt=5_kt=10_qt=15_nv=5_kv=5_qv=1.pth')
 
 
 
-num_batches = 1000
+num_batches = 1
 unknown_probs = []
 unknown_probs_open_world = []
 total_correct_probabilities = 0
@@ -476,6 +509,8 @@ print('Outlier classifier accuracy', outlier_accuracy)
 print('Outlier classifier presicion', outlier_precision)
 print('Outlier classifier recall', outlier_recall)
 print('Outlier classifier F1', outlier_f1)
+
+experiment.write_score_to_file(total_confusion_matrix, total_open_world_classification_correct)
 
 '''
 DEFINITIONS

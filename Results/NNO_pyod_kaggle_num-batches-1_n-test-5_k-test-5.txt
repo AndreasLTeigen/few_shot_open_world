@@ -1,0 +1,10 @@
+-----------------------------
+Nearest Non Outlier (NNO): 
+Total open world accuracy
+0.71
+Total outlier classifier confusion matrix
+{'true_positive': 128, 'true_negative': 235, 'false_positive': 15, 'false_negative': 122}
+Outlier classifier accuracy: 0.726
+Outlier classifier presicion: 0.8951048951048951
+Outlier classifier recall: 0.512
+Outlier classifier F1: 0.6513994910941476

@@ -1,0 +1,10 @@
+-----------------------------
+OpenMax: 
+Total open world accuracy
+0.2
+Total outlier classifier confusion matrix
+{'true_positive': 3, 'true_negative': 0, 'false_positive': 0, 'false_negative': 7}
+Outlier classifier accuracy: 0.3
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.3
+Outlier classifier F1: 0.4615384615384615

@@ -7,12 +7,13 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from typing import List, Iterable, Callable, Tuple
 import numpy as np
+import time
 from PIL import Image
 
 from config import PATH
 from few_shot.utils import pairwise_distances
 from few_shot.core import NShotTaskSampler, prepare_nshot_task
-from few_shot.datasets import Whoas
+from few_shot.datasets import Whoas, Kaggle
 from few_shot.proto import compute_prototypes, proto_net_episode
 from few_shot.models import get_few_shot_encoder
 from openMax.evt_fitting import weibull_tailfitting, np_pairwise_distances
@@ -156,6 +157,7 @@ class ResultExperimentation():
                  distance_metric: str,
                  open_world_testing: bool
                  ):
+        self.dataset_name = dataset
         self.num_tasks = num_tasks
         self.n_shot = n_shot
         self.k_way = k_way
@@ -168,6 +170,8 @@ class ResultExperimentation():
         if dataset == 'whoas':
             self.evaluation_dataset = Whoas('evaluation')
             #self.evaluation_dataset = Whoas('background')
+        elif dataset == 'kaggle':
+            self.evaluation_dataset = Kaggle('evaluation')
         else:
             raise(ValueError, 'Unsupported dataset')
 
@@ -217,7 +221,7 @@ class ResultExperimentation():
             prediction = predictions[i]
             #print(i%self.k_way)
             #print(prediction)
-            if np.argmax(prediction)==(i%self.k_way):
+            if np.argmax(prediction)==(i):
                  correct+=1
             else:
                 missclassifications.append(i)
@@ -231,7 +235,7 @@ class ResultExperimentation():
             prediction = predictions[i]
             #print(i%self.k_way)
             #print(prediction)
-            if openmax_score_u[i] < unknown_threshold and np.argmax(prediction) == (i%self.k_way):
+            if openmax_score_u[i] < unknown_threshold and np.argmax(prediction) == (i):
                 correct += 1
         return correct
 
@@ -351,6 +355,32 @@ class ResultExperimentation():
 
         query_image.show()
 
+    def write_score_to_file(self, model_score, openworld_correct_classification):
+        filename = 'openMax_' + str(self.dataset_name) + '_num-batches-' + str(self.num_tasks) + '_n-test-' + str(self.n_shot) + '_k-test-' + str(self.k_way) +'.txt'
+        f = open(filename, "a")
+        f.write('-----------------------------')
+        f.write( "\n")
+        f.write('OpenMax: ')
+        f.write( "\n")
+        f.write('Total open world accuracy')
+        f.write( "\n")
+        f.write(str(openworld_correct_classification/total_predicitons))
+        f.write( "\n")
+        f.write('Total outlier classifier confusion matrix')
+        f.write( "\n")
+        f.write(str(model_score))
+        f.write( "\n")
+        outlier_accuracy, outlier_precision, outlier_recall, outlier_f1 = self.get_performance_measures(model_score)
+        f.write('Outlier classifier accuracy: ' + str(outlier_accuracy))
+        f.write( "\n")
+        f.write('Outlier classifier presicion: ' + str(outlier_precision))
+        f.write( "\n")
+        f.write('Outlier classifier recall: ' + str(outlier_recall))
+        f.write( "\n")
+        f.write('Outlier classifier F1: ' + str(outlier_f1))
+        f.write( "\n")
+        f.close()
+
 
 
 parser = argparse.ArgumentParser()
@@ -367,15 +397,15 @@ print('open_world_testing')
 print(args.open_world)
 
 experiment = ResultExperimentation(args.dataset, args.num_tasks, args.n_test, args.k_test, args.q_test, args.distance, args.open_world)
-experiment.load_model(PATH + '/models/proto_nets/whoas_97-9.pth')
+experiment.load_model(PATH + '/models/proto_nets/' + str(args.dataset) + '_nt=5_kt=10_qt=15_nv=5_kv=5_qv=1.pth')
 
 
 
 seen=0
 totals = {'loss': 0, experiment.distance_metric: 0}
 
-num_batches = 500
-unknown_threshold = 1
+num_batches = 1
+unknown_threshold = 0.9553332034727486
 unknown_probs = []
 total_correct = 0
 openMax_total_correct_probabilities = 0
@@ -383,6 +413,8 @@ openMax_total_correct_classifications = 0
 total_openworld_classification_correct = 0
 total_predicitons = 0
 all_distances = []
+outlier_u_score = []
+inlier_u_score = []
 total_confusion_matrix = {
           "true_positive": 0,
           "true_negative": 0,
@@ -415,17 +447,20 @@ for batch_nr in range(num_batches):
 
     all_distances.append(distances)
 
+    start_time = time.time()
     class_distances_to_prototype = []
     for i in range(args.k_test):
         #print(i*args.k_test, ':' , (i+1)*args.k_test)
         #print('Support: ', support[i*args.k_test:(i+1)*args.k_test])
         #print('Prototypes: ', prototypes[i])
-        class_distances_to_prototype.append(np_pairwise_distances(prototypes[i], support[i*args.k_test:(i+1)*args.k_test], args.distance))
+        class_distances_to_prototype.append(np_pairwise_distances(prototypes[i], support[i*args.n_test:(i+1)*args.n_test], args.distance))
     #print('pairwise distances')
     #print(class_distances_to_prototype)
+    print(class_distances_to_prototype)
     weibull_model = weibull_tailfitting(prototypes, class_distances_to_prototype)
 
     y_pred_openMax = []
+    unknown_probs = []
     for i in range(len(task_queries)):
         print('======================================')
         print('Query class: ')
@@ -438,9 +473,13 @@ for batch_nr in range(num_batches):
 
         unknown_probs.append(openmax_score_u)
 
+    time_used = time.time()-start_time
     #print(weibull_model)
     print('======================================')
-
+    if args.open_world and batch_nr%2:
+        outlier_u_score.append(openmax_score_u)
+    else:
+        inlier_u_score.append(openmax_score_u)
     #print('Prototypes: ', prototypes)
 
 
@@ -448,6 +487,7 @@ for batch_nr in range(num_batches):
     openMax_correct_probabilities, openMax_missclassifications = experiment.classification_accuracy(y_pred_openMax)
     openMax_correct_classifications = experiment.openmax_classification_accuracy(y_pred_openMax, unknown_probs, unknown_threshold)
     confusion_matrix, openworld_classification_correct = experiment.get_open_world_performance_metrics(y_pred_openMax, unknown_probs, unknown_threshold, batch_nr)
+    print(unknown_probs)
 
     openMax_total_correct_probabilities += openMax_correct_probabilities
     openMax_total_correct_classifications += openMax_correct_classifications
@@ -499,8 +539,8 @@ print('Prototypical networks accuracy')
 print(total_correct/total_predicitons)
 print('OpenMax closed world accuracy')
 print(openMax_total_correct_probabilities/total_predicitons)
-print('OpenMax open world classifier accuracy')
-print(openMax_correct_classifications/total_predicitons)
+#print('OpenMax open world classifier accuracy')
+#print(openMax_correct_classifications/total_predicitons)
 print('Openmax true open world accuracy')
 print(total_openworld_classification_correct/total_predicitons)
 print('Total confusion matrix')
@@ -516,5 +556,16 @@ print('Mean distances')
 print(all_distances.mean())
 print('distance variance')
 print(all_distances.var())
+print('average u value inliers')
+print(sum(inlier_u_score)/len(inlier_u_score))
+#print('average u value outliers')
+#print(sum(outlier_u_score)/len(outlier_u_score))
 
-plt.show()
+#print('reccomended threshold value')
+#print((sum(inlier_u_score)/len(inlier_u_score) + sum(outlier_u_score)/len(outlier_u_score))/2)
+print('Time Used:')
+print(1/time_used)
+
+experiment.write_score_to_file(total_confusion_matrix, total_openworld_classification_correct)
+
+#plt.show()

@@ -6,17 +6,18 @@ except ImportError:
     print("LibMr not installed or libmr.so not found")
     sys.exit()
 
-def weibull_tailfitting(prototypes, distances, tailsize=5, distance_type='l2'):
+def weibull_tailfitting(prototypes, distances, tailsize=3, distance_type='l2'):
     weibull_model = {}
     for class_nr in range(len(prototypes)):
         weibull_model[class_nr] = {}
-
         weibull_model[class_nr]['distances_' + str(distance_type)] = distances[class_nr]
         weibull_model[class_nr]['prototype'] = prototypes[class_nr]
 
         mr = libmr.MR()
         #print(distances)
         tailtofit = sorted(distances[class_nr])[-tailsize:]
+        #print('aisjdfoiajsdfoasidfjoaisjdfoaisjdf')
+        #print(tailtofit)
         mr.fit_high(tailtofit, len(tailtofit))
         #mr.fit_low(tailtofit, len(tailtofit))
 

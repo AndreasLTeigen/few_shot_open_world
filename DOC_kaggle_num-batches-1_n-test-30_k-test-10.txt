@@ -1,0 +1,30 @@
+-----------------------------
+DOC: 
+Total open world accuracy
+0.6
+Total outlier classifier confusion matrix
+{'true_positive': 8, 'true_negative': 0, 'false_positive': 0, 'false_negative': 2}
+Outlier classifier accuracy: 0.8
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.8
+Outlier classifier F1: 0.888888888888889
+-----------------------------
+DOC: 
+Total open world accuracy
+0.7
+Total outlier classifier confusion matrix
+{'true_positive': 7, 'true_negative': 0, 'false_positive': 0, 'false_negative': 3}
+Outlier classifier accuracy: 0.7
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.7
+Outlier classifier F1: 0.8235294117647058
+-----------------------------
+DOC: 
+Total open world accuracy
+0.6
+Total outlier classifier confusion matrix
+{'true_positive': 9, 'true_negative': 0, 'false_positive': 0, 'false_negative': 1}
+Outlier classifier accuracy: 0.9
+Outlier classifier presicion: 1.0
+Outlier classifier recall: 0.9
+Outlier classifier F1: 0.9473684210526316

@@ -6,7 +6,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 import argparse
 
-from few_shot.datasets import OmniglotDataset, MiniImageNet, Whoas
+from few_shot.datasets import OmniglotDataset, MiniImageNet, Whoas, Kaggle
 from few_shot.models import get_few_shot_encoder
 from few_shot.core import NShotTaskSampler, EvaluateFewShot, prepare_nshot_task
 from few_shot.protoDOC import proto_net_episode
@@ -30,7 +30,7 @@ parser.add_argument('--dataset')
 parser.add_argument('--distance', default='l2')
 parser.add_argument('--n-train', default=5, type=int)
 parser.add_argument('--n-test', default=5, type=int)
-parser.add_argument('--k-train', default=5, type=int)
+parser.add_argument('--k-train', default=10, type=int)
 parser.add_argument('--k-test', default=5, type=int)
 parser.add_argument('--q-train', default=15, type=int)
 parser.add_argument('--q-test', default=1, type=int)
@@ -52,6 +52,11 @@ elif args.dataset == 'miniImageNet':
 elif args.dataset == 'whoas':
     n_epochs = 150
     dataset_class = Whoas
+    num_input_channels = 1
+    drop_lr_every =  40
+elif args.dataset == 'kaggle':
+    n_epochs = 150
+    dataset_class = Kaggle
     num_input_channels = 1
     drop_lr_every =  40
 else:
@@ -115,7 +120,8 @@ callbacks = [
     ),
     ModelCheckpoint(
         filepath=PATH + f'/models/protoDOC_nets/{param_str}.pth',
-        monitor=f'val_{args.n_test}-shot_{args.k_test}-way_acc'
+        monitor=f'val_{args.n_test}-shot_{args.k_test}-way_acc',
+        save_best_only=True
     ),
     LearningRateScheduler(schedule=lr_schedule),
     CSVLogger(PATH + f'/logs/protoDOC_nets/{param_str}.csv'),

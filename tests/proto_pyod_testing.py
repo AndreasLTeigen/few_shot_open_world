@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from typing import List, Iterable, Callable, Tuple
 import numpy as np
+import time
 from PIL import Image
 
 from pyod.models.abod import ABOD
@@ -25,14 +26,14 @@ from pyod.models.ocsvm import OCSVM
 from pyod.models.pca import PCA
 from pyod.models.sod import SOD
 from pyod.models.sos import SOS
-#from pyod.models.xgbod import XGBOD
+from pyod.models.xgbod import XGBOD
 
-
+from NNO.NNO import NNO
 
 from config import PATH
 from few_shot.utils import pairwise_distances
 from few_shot.core import NShotTaskSampler, prepare_nshot_task
-from few_shot.datasets import Whoas
+from few_shot.datasets import Whoas, Kaggle, MiniImageNet
 from few_shot.proto import compute_prototypes, proto_net_episode
 from few_shot.models import get_few_shot_encoder
 #from proto_testing_utils import TSNEAlgo
@@ -136,6 +137,7 @@ class NShotCustomTaskSampler(Sampler):
                 support_k = {k: None for k in episode_classes}
                 for k in episode_classes:
                     # Select support examples
+                    print('UAHSDFIUHJSDFIOUJHSDOFIJSDOIFJSDOIFJSDOIFJSDOIFJSODFIJSODIFJO: ', len(df[df['class_id']==k]))
                     support = df[df['class_id'] == k].sample(self.n)
                     support_k[k] = support
 
@@ -174,6 +176,7 @@ class ResultExperimentation():
                  distance_metric: str,
                  open_world_testing: bool
                  ):
+        self.dataset_name = dataset
         self.num_tasks = num_tasks
         self.n_shot = n_shot
         self.k_way = k_way
@@ -188,6 +191,10 @@ class ResultExperimentation():
         if dataset == 'whoas':
             self.evaluation_dataset = Whoas('evaluation')
             #self.evaluation_dataset = Whoas('background')
+        elif dataset == 'kaggle':
+            self.evaluation_dataset = Kaggle('evaluation')
+        elif dataset == 'miniImageNet':
+            self.evaluation_dataset = MiniImageNet('evaluation')
         else:
             raise(ValueError, 'Unsupported dataset')
 
@@ -230,6 +237,7 @@ class ResultExperimentation():
         return loss, y_pred, distances, prototypes, support, queries
 
     def initialise_pyod_classifiers(self, outlier_fraction):
+        #Testing every query to every class and then predicting only if it belongs to the same class
         classifiers = {}
         #Proximity based
         classifiers['K Nearest Neighbors (KNN)'] = []
@@ -252,8 +260,8 @@ class ResultExperimentation():
         #Outlier Ensembles
         classifiers['Isolation Forest (IForest)'] = []
         classifiers['Feature Bagging'] = []
-        #classifiers['Extreme Boosting Based Outlier Detector (XGBOD)'] = []
         classifiers['Lightweight On-line Detector of Anomalies (LODA)'] = []
+
         for i in range(self.k_way):
             for i in range(self.k_way):
                 classifiers['K Nearest Neighbors (KNN)'].append(KNN(method='largest', n_neighbors=int(self.n_shot/3)+1,contamination=outlier_fraction))
@@ -261,22 +269,28 @@ class ResultExperimentation():
                 classifiers['Median K Nearest Neighbors (MedKNN)'].append(KNN(method='median', n_neighbors=int(self.n_shot/3)+1,contamination=outlier_fraction))
                 classifiers['Local Outlier Factor (LOF)'].append(LOF(n_neighbors=int(self.n_shot/3)+1,contamination=outlier_fraction))
                 classifiers['Connectivity-Based Outlier Factor (COF)'].append(COF(n_neighbors=int(self.n_shot/3)+1,contamination=outlier_fraction))
-                #classifiers['Clustering-Based Local Outlier Factor (CBLOF)'].append(CBLOF(n_clusters=5,contamination=outlier_fraction))
                 classifiers['LOCI'].append(LOCI(contamination=outlier_fraction))
-                #classifiers['Histogram-based Outlier Score (HBOS)'].append(CBLOF(contamination=outlier_fraction))
-                classifiers['Subspace Outlier Detection (SOD)'].append(COF(n_neighbors=int(self.n_shot/3)+1,contamination=outlier_fraction))
+                classifiers['Subspace Outlier Detection (SOD)'].append(SOD(n_neighbors=int(self.n_shot/3)+2,contamination=outlier_fraction, ref_set=max(2,int((int(self.n_shot/3)+2)/3))))
                 classifiers['Principal Component Analysis (PCA)'].append(PCA(contamination=outlier_fraction))
-                #classifiers['Minimum Covariance Determinant (MCD)'].append(MCD(contamination=outlier_fraction))
                 classifiers['One-Class Support Vector Machines (OCSVM)'].append(OCSVM(contamination=outlier_fraction))
                 classifiers['Deviation-based Outlier Detection (LMDD)'].append(LMDD(contamination=outlier_fraction))
                 classifiers['Angle-Based Outlier Detection (ABOD)'].append(ABOD(contamination=outlier_fraction))
                 classifiers['Stochastic Outlier Selection (SOS)'].append(SOS(contamination=outlier_fraction))
                 classifiers['Isolation Forest (IForest)'].append(IForest(contamination=outlier_fraction))
                 classifiers['Feature Bagging'].append(FeatureBagging(contamination=outlier_fraction))
-                #classifiers['Extreme Boosting Based Outlier Detector (XGBOD)'].append(XGBOD())
                 classifiers['Lightweight On-line Detector of Anomalies (LODA)'].append(LODA(contamination=outlier_fraction))
         self.num_different_models = len(classifiers)
         return classifiers
+
+    def initialise_supervised_classifiers(self):
+        classifiers = {}
+        classifiers['Extreme Boosting Based Outlier Detector (XGBOD)'] = []
+        classifiers['Nearest Non Outlier (NNO)'] = []
+        for i in range(self.k_way):
+            classifiers['Extreme Boosting Based Outlier Detector (XGBOD)'].append(XGBOD(silent=False))
+            classifiers['Nearest Non Outlier (NNO)'].append(NNO())
+        return classifiers
+
 
     def initialise_models_score(self, classifiers):
         models_score = {}
@@ -289,16 +303,19 @@ class ResultExperimentation():
                                                           "false_negative": 0
                                                         }
             models_score[model_name]['openworld_correct_classification'] = 0
+            models_score[model_name]['time'] = 0
         return models_score
 
 
-    def train_outlier_classifiers(self, classifiers, support):
+    def train_outlier_classifiers(self, classifiers, support, model_score):
         for i, (clf_name, clf_models) in enumerate(classifiers.items()):
             class_models = []
             print(clf_name)
+            start_time = time.time()
             for j, class_support in enumerate(support):
                 clf_models[j].fit(class_support)
                 #print(clf_models[j].predict(class_support))
+            model_score[clf_name]['time'] += (time.time() - start_time)
             '''
             print("DIVIDE")
             for j, class_j_support in enumerate(support):
@@ -309,12 +326,32 @@ class ResultExperimentation():
             '''
         return classifiers
 
-    def get_outliers(self, models, support, queries):
+    def train_supervised_outlier_classifiers(self, supervised_classifiers, support, prototypes, model_score):
+        for i, (clf_name, clf_models) in enumerate(supervised_classifiers.items()):
+            class_models = []
+            print(clf_name)
+            start_time = time.time()
+            for j, class_support in enumerate(support):
+                y = np.ones((self.k_way, self.n_shot, 1))
+                y[j] = y[j]-1
+                y = np.reshape(y, (self.k_way * self.n_shot))
+                x = np.reshape(support, (self.k_way * self.n_shot, 1600))
+                if clf_name == 'Extreme Boosting Based Outlier Detector (XGBOD)':
+                    clf_models[j].fit_predict(x,y)
+                else:
+                    clf_models[j].fit(x,y,prototypes[j])
+            model_score[clf_name]['time'] += (time.time() - start_time)
+
+        return supervised_classifiers
+
+
+    def get_outliers(self, models, support, queries, model_score):
         model_outliers = {}
-        for i, (model_name, class_models) in enumerate(models.items()):
+        for k, (model_name, class_models) in enumerate(models.items()):
             outliers = []
             print('OUTLIER PREDICTION')
             print(model_name)
+            start_time = time.time()
             for i in range(self.k_way):
                 query = queries[i]
                 query_outliers = []
@@ -325,6 +362,7 @@ class ResultExperimentation():
                     print(class_models[j].predict(clf_test_data))
                 outliers.append(query_outliers)
             model_outliers[model_name] = outliers
+            model_score[model_name]['time'] += (time.time() - start_time)
         return model_outliers
 
 
@@ -414,7 +452,7 @@ class ResultExperimentation():
 
     def update_open_world_performance_metrics(self, models_score, predictions, outlier_models, batch_nr):
         print(outlier_models)
-        for i, (model_name, outliers) in enumerate(outlier_models.items()):
+        for k, (model_name, outliers) in enumerate(outlier_models.items()):
 
             for i in range(len(predictions)):
                 pred_class = np.argmax(predictions[i])
@@ -518,8 +556,8 @@ class ResultExperimentation():
         plt.show()
 
     def write_score_to_file(self, models_score):
-        filename = 'pyod_num-batches-' + str(self.num_tasks) + '_n-test-' + str(self.n_shot) + '_k-test-' + str(self.k_way) +'.txt'
-        f = open(filename, "w")
+        filename = 'NNO_pyod_' + str(self.dataset_name) + '_num-batches-' + str(self.num_tasks) + '_n-test-' + str(self.n_shot) + '_k-test-' + str(self.k_way) +'.txt'
+        f = open(filename, "a")
         for i, (model_name, model_score) in enumerate(models_score.items()):
             f.write('-----------------------------')
             f.write( "\n")
@@ -542,6 +580,8 @@ class ResultExperimentation():
             f.write( "\n")
             f.write('Outlier classifier F1: ' + str(outlier_f1))
             f.write( "\n")
+            f.write('Time use: ' + str(1/(model_score['time']/self.k_way)))
+            f.write( "\n")
         f.close()
 
 
@@ -560,11 +600,11 @@ print('open_world_testing')
 print(args.open_world)
 
 experiment = ResultExperimentation(args.dataset, args.num_tasks, args.n_test, args.k_test, args.q_test, args.distance, args.open_world)
-experiment.load_model(PATH + '/models/proto_nets/whoas_97-9.pth')
+experiment.load_model(PATH + '/models/proto_nets/' + str(args.dataset) + '_nt=5_kt=10_qt=15_nv=5_kv=5_qv=1.pth')
 
 
 
-num_batches = 1000
+num_batches = 1
 unknown_probs = []
 unknown_probs_open_world = []
 total_correct = 0
@@ -588,7 +628,9 @@ closest_distances = []
 closest_distances_openworld = []
 
 classifiers = experiment.initialise_pyod_classifiers(0.0001)
+supervised_classifiers = experiment.initialise_supervised_classifiers()
 models_score = experiment.initialise_models_score(classifiers)
+supervised_models_score = experiment.initialise_models_score(supervised_classifiers)
 
 for batch_nr in range(num_batches):
     x, y = experiment.get_batch(experiment.evaluation_taskloader)
@@ -609,8 +651,11 @@ for batch_nr in range(num_batches):
     #print(len(queries))
 
     support = support.reshape(args.k_test, args.n_test, -1)
-    outlier_models = experiment.train_outlier_classifiers(classifiers, support)
-    model_outliers = experiment.get_outliers(outlier_models, support, queries)
+    outlier_models = experiment.train_outlier_classifiers(classifiers, support, models_score)
+    supervised_outlier_models = experiment.train_supervised_outlier_classifiers(supervised_classifiers, support, prototypes, supervised_models_score)
+
+    model_outliers = experiment.get_outliers(outlier_models, support, queries, models_score)
+    supervised_model_outliers = experiment.get_outliers(supervised_outlier_models, support, queries, supervised_models_score)
 
 
     task_support_classes = list(dict.fromkeys(experiment.batch_sampler.support_df_last_task))
@@ -625,7 +670,9 @@ for batch_nr in range(num_batches):
 
     correct, missclassifications = experiment.classification_accuracy(y_pred)
     models_score = experiment.update_open_world_performance_metrics(models_score, y_pred, model_outliers, batch_nr)
+    supervised_models_score = experiment.update_open_world_performance_metrics(supervised_models_score, y_pred, supervised_model_outliers, batch_nr)
     print(models_score)
+    print(supervised_models_score)
 
 
 
@@ -733,6 +780,19 @@ for i, (model_name, model_score) in enumerate(models_score.items()):
     print('Outlier classifier recall', outlier_recall)
     print('Outlier classifier F1', outlier_f1)
 
+for i, (model_name, model_score) in enumerate(supervised_models_score.items()):
+    print('-----------------------------')
+    print(model_name,': ')
+    print('Total open world accuracy')
+    print(model_score['openworld_correct_classification']/total_predicitons)
+    print('Total outlier classifier confusion matrix')
+    print(model_score['confusion_matrix'])
+    outlier_accuracy, outlier_precision, outlier_recall, outlier_f1 = experiment.get_performance_measures(model_score)
+    print('Outlier classifier accuracy', outlier_accuracy)
+    print('Outlier classifier presicion', outlier_precision)
+    print('Outlier classifier recall', outlier_recall)
+    print('Outlier classifier F1', outlier_f1)
+
 all_distances = np.array(all_distances).ravel()
 print('Mean distances')
 print(all_distances.mean())
@@ -740,5 +800,6 @@ print('distance variance')
 print(all_distances.var())
 
 experiment.write_score_to_file(models_score)
+experiment.write_score_to_file(supervised_models_score)
 
 plt.show()

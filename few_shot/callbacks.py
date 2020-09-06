@@ -181,6 +181,7 @@ class ProgressBarLogger(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         # Update log values
+        print(logs)
         self.log_values = {}
         for k in self.metrics:
             if k in logs:
@@ -455,7 +456,7 @@ class ModelCheckpoint(Callback):
             else:
                 self.monitor_op = np.less
 
-        self.best = np.Inf
+        #self.best = np.Inf
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
@@ -476,6 +477,7 @@ class ModelCheckpoint(Callback):
                                   % (epoch + 1, self.monitor, self.best,
                                      current, filepath))
                         self.best = current
+                        print('saving model')
                         torch.save(self.model.state_dict(), filepath)
                     else:
                         if self.verbose > 0:
@@ -484,6 +486,7 @@ class ModelCheckpoint(Callback):
             else:
                 if self.verbose > 0:
                     print('\nEpoch %05d: saving model to %s' % (epoch + 1, filepath))
+                print('saving model')
                 torch.save(self.model.state_dict(), filepath)
 
 

@@ -5,7 +5,7 @@ import argparse
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 
-from few_shot.datasets import OmniglotDataset, MiniImageNet, Whoas
+from few_shot.datasets import OmniglotDataset, MiniImageNet, Whoas, Kaggle
 from few_shot.core import NShotTaskSampler, prepare_nshot_task, EvaluateFewShot
 from few_shot.matching import matching_net_episode
 from few_shot.train import fit
@@ -27,8 +27,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--dataset')
 parser.add_argument('--fce', type=lambda x: x.lower()[0] == 't')  # Quick hack to extract boolean
 parser.add_argument('--distance', default='cosine')
-parser.add_argument('--n-train', default=1, type=int)
-parser.add_argument('--n-test', default=1, type=int)
+parser.add_argument('--n-train', default=5, type=int)
+parser.add_argument('--n-test', default=5, type=int)
 parser.add_argument('--k-train', default=5, type=int)
 parser.add_argument('--k-test', default=5, type=int)
 parser.add_argument('--q-train', default=15, type=int)
@@ -52,8 +52,13 @@ elif args.dataset == 'miniImageNet':
     num_input_channels = 3
     lstm_input_size = 1600
 elif args.dataset == 'whoas':
-    n_epochs = 200
+    n_epochs = 150
     dataset_class = Whoas
+    num_input_channels = 1
+    lstm_input_size = 1600
+elif args.dataset == 'kaggle':
+    n_epochs = 150
+    dataset_class = Kaggle
     num_input_channels = 1
     lstm_input_size = 1600
 else:
@@ -117,6 +122,7 @@ callbacks = [
     ModelCheckpoint(
         filepath=PATH + f'/models/matching_nets/{param_str}.pth',
         monitor=f'val_{args.n_test}-shot_{args.k_test}-way_acc',
+        save_best_only=True
         # monitor=f'val_loss',
     ),
     ReduceLROnPlateau(patience=20, factor=0.5, monitor=f'val_{args.n_test}-shot_{args.k_test}-way_acc'),
@@ -136,3 +142,46 @@ fit(
     fit_function_kwargs={'n_shot': args.n_train, 'k_way': args.k_train, 'q_queries': args.q_train, 'train': True,
                          'fce': args.fce, 'distance': args.distance}
 )
+
+
+eval1 =EvaluateFewShot(
+    eval_fn=matching_net_episode,
+    num_tasks=evaluation_episodes,
+    n_shot=1,
+    k_way=args.k_test,
+    q_queries=args.q_test,
+    taskloader=evaluation_taskloader,
+    prepare_batch=prepare_nshot_task(args.n_test, args.k_test, args.q_test),
+    fce=args.fce,
+    distance=args.distance
+    )
+
+eval2 =EvaluateFewShot(
+    eval_fn=matching_net_episode,
+    num_tasks=evaluation_episodes,
+    n_shot=args.n_test,
+    k_way=10,
+    q_queries=args.q_test,
+    taskloader=evaluation_taskloader,
+    prepare_batch=prepare_nshot_task(args.n_test, args.k_test, args.q_test),
+    fce=args.fce,
+    distance=args.distance
+    )
+eval3 =EvaluateFewShot(
+    eval_fn=matching_net_episode,
+    num_tasks=evaluation_episodes,
+    n_shot=1,
+    k_way=10,
+    q_queries=args.q_test,
+    taskloader=evaluation_taskloader,
+    prepare_batch=prepare_nshot_task(args.n_test, args.k_test, args.q_test),
+    fce=args.fce,
+    distance=args.distance
+    )
+
+print('EVAL1:')
+eval1.on_epoch_end(151)
+print('EVAL2:')
+eval2.on_epoch_end(151)
+print('EVAL3:')
+eval3.on_epoch_end(151)
